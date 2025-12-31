@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loan Approval Predictor</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        padding: 40px;
+      }
+
+      @media (max-width: 900px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .input-section {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+      }
+
+      .input-section h2 {
+        color: #333;
+        margin-bottom: 25px;
+        font-size: 1.8rem;
+      }
+
+      .input-group {
+        margin-bottom: 25px;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 10px;
+        color: #555;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .input-group input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+      }
+
+      .input-group input:focus {
+        border-color: #2575fc;
+        box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.1);
+        outline: none;
+      }
+
+      .input-hint {
+        font-size: 0.9rem;
+        color: #777;
+        margin-top: 8px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 18px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+        color: white;
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+      }
+
+      .btn-warning {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .status {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: 600;
+      }
+
+      .connected {
+        background: #d4edda;
+        color: #155724;
+        border: 2px solid #c3e6cb;
+      }
+
+      .disconnected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 2px solid #f5c6cb;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        display: none;
+      }
+
+      .spinner {
+        width: 60px;
+        height: 60px;
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #2575fc;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .results-section {
+        display: none;
+      }
+
+      .result-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 600px) {
+        .result-cards {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .result-card {
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        border: 3px solid;
+        transition: all 0.3s;
+      }
+
+      .result-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-approved {
+        border-color: #2ecc71;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      }
+
+      .card-rejected {
+        border-color: #e74c3c;
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      }
+
+      .model-name {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      .prediction-text {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 15px 0;
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .probability {
+        font-size: 3.5rem;
+        font-weight: bold;
+        margin: 20px 0;
+      }
+
+      .probability-approved {
+        color: #2ecc71;
+      }
+
+      .probability-rejected {
+        color: #e74c3c;
+      }
+
+      .confidence {
+        font-size: 1.1rem;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      .analysis {
+        margin-top: 30px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+      }
+
+      .analysis h3 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .risk-factors {
+        margin: 20px 0;
+      }
+
+      .risk-list {
+        list-style: none;
+      }
+
+      .risk-list li {
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #e74c3c;
+      }
+
+      .summary {
+        margin-top: 25px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+      }
+
+      .final-decision {
+        margin-top: 25px;
+        padding: 25px;
+        text-align: center;
+        border-radius: 15px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+      }
+
+      .decision-approved {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+      }
+
+      .decision-rejected {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      }
+
+      .decision-review {
+        background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+      }
+
+      .footer {
+        background: #f8f9fa;
+        padding: 25px;
+        text-align: center;
+        color: #666;
+        border-top: 2px solid #e9ecef;
+        margin-top: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>💰 Loan Approval Predictor</h1>
+        <p>
+          Enter your details to predict loan approval using Machine Learning
+        </p>
+      </div>
+
+      <div class="content">
+        <!-- Input Section -->
+        <div class="input-section">
+          <h2>📝 Applicant Information</h2>
+
+          <div class="status" id="apiStatus">Checking API connection...</div>
+
+          <div class="input-group">
+            <label for="age">Age (18-70 years)</label>
+            <input type="number" id="age" min="18" max="70" value="35" />
+            <div class="input-hint">Must be between 18 and 70 years</div>
+          </div>
+
+          <div class="input-group">
+            <label for="income">Annual Income ($)</label>
+            <input
+              type="number"
+              id="income"
+              min="20000"
+              max="200000"
+              value="65000"
+            />
+            <div class="input-hint">
+              Enter your yearly income ($20,000 - $200,000)
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="loanAmount">Loan Amount ($)</label>
+            <input
+              type="number"
+              id="loanAmount"
+              min="5000"
+              max="100000"
+              value="25000"
+            />
+            <div class="input-hint">
+              Amount you want to borrow ($5,000 - $100,000)
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="predictLoan()">
+            🔮 Predict Loan Approval
+          </button>
+
+          <button class="btn btn-secondary" onclick="testGoodProfile()">
+            ✅ Test Good Applicant
+          </button>
+
+          <button class="btn btn-warning" onclick="testBadProfile()">
+            ❌ Test Risky Applicant
+          </button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your application...</p>
+          </div>
+
+          <div id="resultsContent" style="display: none">
+            <h2>📊 Prediction Results</h2>
+
+            <div class="result-cards">
+              <div class="result-card" id="dtCard">
+                <div class="model-name">🌳 Decision Tree</div>
+                <div class="prediction-text" id="dtPrediction">--</div>
+                <div class="probability" id="dtProbability">--%</div>
+                <div class="confidence" id="dtConfidence">-- confidence</div>
+              </div>
+
+              <div class="result-card" id="lrCard">
+                <div class="model-name">📈 Logistic Regression</div>
+                <div class="prediction-text" id="lrPrediction">--</div>
+                <div class="probability" id="lrProbability">--%</div>
+                <div class="confidence" id="lrConfidence">-- confidence</div>
+              </div>
+            </div>
+
+            <div class="analysis">
+              <h3>📋 Analysis</h3>
+              <div class="summary">
+                <p><strong>Application Summary:</strong></p>
+                <p>
+                  Age: <span id="summaryAge">--</span> | Income: $<span
+                    id="summaryIncome"
+                    >--</span
+                  >
+                  | Loan: $<span id="summaryLoan">--</span>
+                </p>
+                <p>Loan-to-Income Ratio: <span id="summaryRatio">--</span></p>
+              </div>
+
+              <div class="risk-factors" id="riskFactors" style="display: none">
+                <p><strong>⚠️ Risk Factors:</strong></p>
+                <ul class="risk-list" id="riskList"></ul>
+              </div>
+            </div>
+
+            <div class="final-decision" id="finalDecision">
+              <span id="decisionText">Final Decision: --</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          Powered by Machine Learning • Decision Tree & Logistic Regression
+          Models
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // API Configuration
+      const API_URL = "http://localhost:8000";
+
+      // DOM Elements
+      let apiStatus, loadingDiv, resultsSection, resultsContent;
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        apiStatus = document.getElementById("apiStatus");
+        loadingDiv = document.getElementById("loading");
+        resultsSection = document.getElementById("resultsSection");
+        resultsContent = document.getElementById("resultsContent");
+
+        // Check API connection on load
+        checkAPI();
+
+        // Enter key support
+        document.addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            predictLoan();
+          }
+        });
+      });
+
+      // Check API connection
+      async function checkAPI() {
+        try {
+          const response = await fetch(`${API_URL}/health`);
+          const data = await response.json();
+
+          if (data.status === "healthy") {
+            apiStatus.innerHTML = "✅ API Connected! Ready for predictions.";
+            apiStatus.className = "status connected";
+            return true;
+          }
+        } catch (error) {
+          apiStatus.innerHTML =
+            "⚠️ API not connected. Make sure to run: python api.py";
+          apiStatus.className = "status disconnected";
+        }
+        return false;
+      }
+
+      // Main prediction function
+      async function predictLoan() {
+        // Get input values
+        const age = document.getElementById("age").value;
+        const income = document.getElementById("income").value;
+        const loanAmount = document.getElementById("loanAmount").value;
+
+        // Validate inputs
+        if (!age || !income || !loanAmount) {
+          alert("Please fill in all fields!");
+          return;
+        }
+
+        if (age < 18 || age > 70) {
+          alert("Age must be between 18 and 70");
+          return;
+        }
+
+        // Check API connection
+        if (!(await checkAPI())) {
+          alert("API server is not running! Please run: python api.py");
+          return;
+        }
+
+        // Show loading and hide previous results
+        loadingDiv.style.display = "block";
+        resultsContent.style.display = "none";
+        resultsSection.style.display = "block";
+
+        try {
+          // Send request to API
+          const response = await fetch(`${API_URL}/predict`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              age: parseInt(age),
+              income: parseFloat(income),
+              loan_amount: parseFloat(loanAmount),
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error(data.error || "Prediction failed");
+          }
+
+          // Display the results
+          displayResults(data);
+        } catch (error) {
+          console.error("Error:", error);
+          alert(
+            `Prediction failed: ${error.message}\n\nMake sure the API server is running.`
+          );
+        } finally {
+          loadingDiv.style.display = "none";
+          resultsContent.style.display = "block";
+        }
+      }
+
+      // Display prediction results
+      function displayResults(data) {
+        // Update summary
+        document.getElementById("summaryAge").textContent = data.input_data.age;
+        document.getElementById("summaryIncome").textContent =
+          data.input_data.income.toLocaleString();
+        document.getElementById("summaryLoan").textContent =
+          data.input_data.loan_amount.toLocaleString();
+        document.getElementById("summaryRatio").textContent =
+          data.input_data.loan_to_income_ratio;
+
+        // Decision Tree results
+        const dt = data.predictions.decision_tree;
+        const dtCard = document.getElementById("dtCard");
+        const dtPrediction = document.getElementById("dtPrediction");
+        const dtProbability = document.getElementById("dtProbability");
+        const dtConfidence = document.getElementById("dtConfidence");
+
+        dtCard.className = dt.approved
+          ? "result-card card-approved"
+          : "result-card card-rejected";
+        dtPrediction.textContent = dt.approved ? "✅ APPROVED" : "❌ REJECTED";
+        dtProbability.textContent = dt.percentage;
+        dtProbability.className = dt.approved
+          ? "probability probability-approved"
+          : "probability probability-rejected";
+        dtConfidence.textContent = `${dt.confidence} confidence`;
+
+        // Logistic Regression results
+        const lr = data.predictions.logistic_regression;
+        const lrCard = document.getElementById("lrCard");
+        const lrPrediction = document.getElementById("lrPrediction");
+        const lrProbability = document.getElementById("lrProbability");
+        const lrConfidence = document.getElementById("lrConfidence");
+
+        lrCard.className = lr.approved
+          ? "result-card card-approved"
+          : "result-card card-rejected";
+        lrPrediction.textContent = lr.approved ? "✅ APPROVED" : "❌ REJECTED";
+        lrProbability.textContent = lr.percentage;
+        lrProbability.className = lr.approved
+          ? "probability probability-approved"
+          : "probability probability-rejected";
+        lrConfidence.textContent = `${lr.confidence} confidence`;
+
+        // Risk factors
+        const riskList = document.getElementById("riskList");
+        riskList.innerHTML = "";
+
+        if (
+          data.analysis.risk_factors &&
+          data.analysis.risk_factors.length > 0
+        ) {
+          data.analysis.risk_factors.forEach((factor) => {
+            const li = document.createElement("li");
+            li.textContent = factor;
+            riskList.appendChild(li);
+          });
+          document.getElementById("riskFactors").style.display = "block";
+        } else {
+          document.getElementById("riskFactors").style.display = "none";
+        }
+
+        // Final decision
+        const finalDecision = document.getElementById("finalDecision");
+        const decisionText = document.getElementById("decisionText");
+
+        if (data.summary.final_decision === "APPROVED") {
+          finalDecision.className = "final-decision decision-approved";
+          decisionText.innerHTML = "🎉 CONGRATULATIONS! Loan APPROVED";
+        } else if (data.summary.final_decision === "REJECTED") {
+          finalDecision.className = "final-decision decision-rejected";
+          decisionText.innerHTML = "❌ Sorry, Loan REJECTED";
+        } else {
+          finalDecision.className = "final-decision decision-review";
+          decisionText.innerHTML = "⚠️ REVIEW NEEDED - Models disagree";
+        }
+
+        // Add analysis details
+        const analysis = data.analysis;
+        const analysisHTML = `
+                <div style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                    <p>Monthly Payment: $${analysis.monthly_payment.toLocaleString()} | 
+                       Monthly Income: $${analysis.monthly_income.toLocaleString()} | 
+                       Payment Burden: ${(
+                         analysis.payment_burden * 100
+                       ).toFixed(1)}%</p>
+                </div>
+            `;
+
+        document
+          .querySelector(".analysis")
+          .insertAdjacentHTML("beforeend", analysisHTML);
+      }
+
+      // Test functions
+      function testGoodProfile() {
+        document.getElementById("age").value = 35;
+        document.getElementById("income").value = 75000;
+        document.getElementById("loanAmount").value = 20000;
+        predictLoan();
+      }
+
+      function testBadProfile() {
+        document.getElementById("age").value = 22;
+        document.getElementById("income").value = 28000;
+        document.getElementById("loanAmount").value = 55000;
+        predictLoan();
+      }
+
+      // Real-time input validation
+      document.getElementById("age").addEventListener("input", function () {
+        let value = parseInt(this.value) || 35;
+        if (value < 18) value = 18;
+        if (value > 70) value = 70;
+        this.value = value;
+      });
+
+      document.getElementById("income").addEventListener("input", function () {
+        let value = parseInt(this.value) || 65000;
+        if (value < 20000) value = 20000;
+        if (value > 200000) value = 200000;
+        this.value = value;
+      });
+
+      document
+        .getElementById("loanAmount")
+        .addEventListener("input", function () {
+          let value = parseInt(this.value) || 25000;
+          if (value < 5000) value = 5000;
+          if (value > 100000) value = 100000;
+          this.value = value;
+        });
+    </script>
+  </body>
+</html>
